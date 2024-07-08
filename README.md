@@ -1,2 +1,2 @@
 # chess.com
-this is real live chess playimg game
+this is real live chess playing game
