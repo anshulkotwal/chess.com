@@ -59,24 +59,29 @@ Running the Game
 
 3. Open a second window or use another device to simulate the second player.
 
-Gameplay
+## Gameplay
+
 Drag and drop the pieces to make a move. The system will automatically validate the move, update the board, and adjust the score accordingly. The game supports all standard chess rules, including special moves like castling and en passant.
 
+## Challenges & Learnings
 
-Challenges & Learnings
 This project provided valuable insights into real-time web applications, especially in handling synchronous events between multiple clients. Ensuring that game states were accurately maintained and reflected across different clients was a rewarding challenge.
 
-Future Enhancements
-Chat System: Allow players to communicate during the game.
-AI Opponent: Implement an AI to play against when no second player is available.
-Move History: Track and display previous moves for better game analysis.
-Enhanced UI/UX: Add animations, sound effects, and additional visual feedback for a more immersive experience.
-Contributing
+## Future Enhancements
+
+- **Chat System:** Allow players to communicate during the game.
+- **AI Opponent:** Implement an AI to play against when no second player is available.
+- **Move History:** Track and display previous moves for better game analysis.
+- **Enhanced UI/UX:** Add animations, sound effects, and additional visual feedback for a more immersive experience.
+
+## Contributing
+
 Contributions are welcome! If you'd like to improve this project, feel free to fork the repository and submit a pull request.
 
-License
-This project is licensed under the MIT License - see the LICENSE file for details.
+## License
 
-Acknowledgments
-Special thanks to the creators of Node.js, Express, Socket.io, and Chess.js for providing the tools to make this project possible.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Acknowledgments
+
+Special thanks to the creators of [Node.js](https://nodejs.org/), [Express](https://expressjs.com/), [Socket.io](https://socket.io/), and [Chess.js](https://github.com/jhlywa/chess.js/) for providing the tools to make this project possible.
