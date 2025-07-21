@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes confetti {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes celebrationBounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+            60% { transform: translateY(-15px); }
+        }
+        
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            grid-template-rows: repeat(8, minmax(0, 1fr));
+            width: clamp(280px, 90vw, 480px); /* Responsive width */
+            height: clamp(280px, 90vw, 480px); /* Responsive height */
+            transform: rotate(0deg);
+            border: 4px solid #8B4513;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .piece.white {
+            color: white;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+        }
+        
+        .piece.black {
+            color: #2c2c2c;
+            filter: drop-shadow(0 2px 4px rgba(255,255,255,0.3));
+        }
+        
+        .flipped {
+            transform: rotate(180deg);
+        }
+        
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .square.light {
+            background-color: #f0d9b5;
+        }
+        
+        .square.dark {
+            background-color: #b58863;
+        }
+        
+        .square:hover {
+            box-shadow: inset 0 0 0 3px #10b981;
+        }
+        
+        .square.valid-move {
+            background-color: rgba(16, 185, 129, 0.3);
+        }
+        
+        .piece {
+            font-size: clamp(30px, 8vw, 42px); /* Responsive font size */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .piece.draggable {
+            cursor: grab;
+        }
+        
+        .piece.draggable:hover {
+            transform: scale(1.15);
+            filter: brightness(1.2);
+        }
+        
+        .dragging {
+            opacity: 0.6;
+            transform: scale(1.1);
+        }
+        
+        .flipped .piece {
+            transform: rotate(180deg);
+        }
+        
+        .scoreboard {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid #64748b;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            width: 100%; /* Full width on small screens */
+            max-width: 400px; /* Max width on larger screens */
+        }
+        
+        .score-update {
+            animation: scoreUpdate 0.5s ease-in-out;
+        }
+        
+        @keyframes scoreUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .captured-piece {
+            font-size: clamp(20px, 5vw, 24px); /* Responsive font size */
+            margin: 2px;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+        
+        .captured-piece:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .status-active {
+            background-color: #10b981;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-inactive {
+            background-color: #6b7280;
+        }
+        
+        .status-waiting {
+            background-color: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+        
+        .game-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 12px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .waiting-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .waiting-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #64748b;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .celebration-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            display: none; /* Hidden by default */
+        }
+        
+        .celebration-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 60px;
+            border-radius: 24px;
+            text-align: center;
+            border: 3px solid #10b981;
+            box-shadow: 0 0 60px rgba(16, 185, 129, 0.3);
+            animation: celebrationBounce 1s ease-out;
+            position: relative; /* For confetti */
+            overflow: hidden; /* For confetti */
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            animation: confetti 3s linear infinite;
+        }
+        
+        .confetti:nth-child(2n) { background: #f59e0b; }
+        .confetti:nth-child(3n) { background: #ef4444; }
+        .confetti:nth-child(4n) { background: #3b82f6; }
+        .confetti:nth-child(5n) { background: #8b5cf6; }
+        
+        .player-card {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .player-card.active {
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+        
+        .player-card.your-turn {
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        .move-item {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .move-item:hover {
+            background: rgba(16, 185, 129, 0.1);
+            transform: translateX(4px);
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .role-white {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .role-black {
+            background: #1e293b;
+            color: #f8fafc;
+        }
+        
+        .role-spectator {
+            background: #6b7280;
+            color: #f8fafc;
+        }
+        
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .connection-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 100;
+        }
+        
+        .connection-status.connected {
+            background: #10b981;
+            color: white;
+        }
+        
+        .connection-status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .connection-status.connecting {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .board-coordinates {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #8b5cf6;
+            pointer-events: none;
+            z-index: 1; /* Ensure coordinates are above squares but below pieces */
+        }
+        
+        .coord-rank {
+            left: -20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        
+        .coord-file {
+            bottom: -20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        /* Adjustments for smaller screens */
+        @media (max-width: 1024px) {
+            .flex-col-reverse-lg {
+                flex-direction: column-reverse; /* Stack scoreboard below board on mobile */
+            }
+            .order-1-lg { order: 1; }
+            .order-2-lg { order: 2; }
+            .order-3-lg { order: 3; }
+
+            .chessboard {
+                margin: 20px auto; /* Center board on small screens */
+            }
+
+            .player-card, .scoreboard {
+                margin-top: 20px;
+            }
+
+            .connection-status {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .board-coordinates {
+                font-size: 10px;
+            }
+
+            .coord-rank { left: -15px; }
+            .coord-file { bottom: -15px; }
+
+            .main-game-container {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chessboard {
+                width: 95vw;
+                height: 95vw;
+                max-width: 400px; /* Constrain max size for larger phones/tablets */
+                max-height: 400px;
+            }
+            .player-card, .scoreboard {
+                padding: 12px;
+            }
+            .text-3xl { font-size: 1.75rem; /* 28px */ }
+            .text-2xl { font-size: 1.5rem; /* 24px */ }
+            .text-lg { font-size: 1.125rem; /* 18px */ }
+            .text-sm { font-size: 0.875rem; /* 14px */ }
+            .text-xs { font-size: 0.75rem; /* 12px */ }
+            .piece { font-size: clamp(28px, 9vw, 38px); }
+            .captured-piece { font-size: clamp(18px, 4.5vw, 20px); }
+        }
+
+        @media (max-width: 480px) {
+            .chessboard {
+                width: 98vw;
+                height: 98vw;
+                border-width: 2px;
+            }
+            .coord-rank { left: -10px; }
+            .coord-file { bottom: -10px; }
+        }
+    </style>
+    <title>Live Chess Game</title>
+</head>
+
+<body>
+    <div class="w-full min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        
+        <div id="connection-status" class="connection-status connecting">
+            🔄 Connecting...
+        </div>
+        
+        <div class="flex flex-col xl:flex-row items-center gap-8 max-w-7xl w-full main-game-container">
+            
+            <div class="scoreboard p-4 sm:p-8 w-full xl:w-96 text-white order-2-lg xl:order-1-lg">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">♔ Live Chess ♛</h2>
+                    <div id="game-status" class="text-sm text-gray-300 bg-slate-700 rounded-lg p-2">
+                        Waiting for players...
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2">
+                        Your Role: <span id="player-role" class="font-semibold">-</span>
+                        <span id="role-badge" class="role-badge role-spectator">Connecting...</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        Spectators: <span id="spectator-count" class="font-semibold">0</span>
+                    </div>
+                </div>
+                
+                <div class="player-card" id="white-player-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <span id="white-status" class="status-indicator status-inactive"></span>
+                            <span class="text-base sm:text-lg font-semibold">White Player</span>
+                        </div>
+                        <div class="text-2xl sm:text-3xl">♔</div>
+                    </div>
+                    <div class="bg-slate-700 rounded-lg p-3 sm:p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs sm:text-sm text-gray-300">Material Score:</span>
+                            <span id="white-score" class="text-xl sm:text-2xl font-bold text-white">0</span>
+                        </div>
+                        <div class="text-xs sm:text-sm text-gray-300 mb-2">Captured Pieces:</div>
+                        <div id="white-captured" class="min-h-[30px] sm:min-h-[40px] flex flex-wrap bg-slate-800 rounded-lg p-2 sm:p-3"></div>
+                    </div>
+                </div>
+                
+                <div class="player-card" id="black-player-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <span id="black-status" class="status-indicator status-inactive"></span>
+                            <span class="text-base sm:text-lg font-semibold">Black Player</span>
+                        </div>
+                        <div class="text-2xl sm:text-3xl">♚</div>
+                    </div>
+                    <div class="bg-slate-700 rounded-lg p-3 sm:p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs sm:text-sm text-gray-300">Material Score:</span>
+                            <span id="black-score" class="text-xl sm:text-2xl font-bold text-white">0</span>
+                        </div>
+                        <div class="text-xs sm:text-sm text-gray-300 mb-2">Captured Pieces:</div>
+                        <div id="black-captured" class="min-h-[30px] sm:min-h-[40px] flex flex-wrap bg-slate-800 rounded-lg p-2 sm:p-3"></div>
+                    </div>
+                </div>
+                
+                <div class="game-info">
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-300 mb-2">
+                        <span>Current Turn:</span>
+                        <span id="current-turn" class="font-semibold text-yellow-400">White</span>
+                    </div>
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-300 mb-2">
+                        <span>Move Count:</span>
+                        <span id="move-count" class="font-semibold">0</span>
+                    </div>
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-300 mb-3">
+                        <span>Game Time:</span>
+                        <span id="game-time" class="font-semibold text-green-400">0:00</span>
+                    </div>
+                    
+                    <div class="border-t border-gray-600 pt-3">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs sm:text-sm text-gray-300">Sound Effects:</span>
+                            <button id="sound-toggle" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 shadow-lg">
+                                ON
+                            </button>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-xs text-gray-400 mr-3">Volume:</span>
+                            <input type="range" id="volume-slider" min="0" max="100" value="50" class="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+                <button id="new-game-btn" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 shadow-md">
+                    New Game
+                </button>
+            </div>
+            
+            <div class="relative order-1-lg xl:order-2-lg">
+                <div class="board-coordinates coord-rank" id="rank-coords">
+                    <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+                </div>
+                <div class="board-coordinates coord-file" id="file-coords">
+                    <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
+                </div>
+                
+                <div class="chessboard" id="chessboard"></div>
+                
+                <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center">
+                    <div id="turn-indicator" class="bg-yellow-500 text-black px-4 py-1 sm:px-6 sm:py-2 rounded-full font-bold text-base sm:text-lg shadow-lg">
+                        White's Turn
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scoreboard p-4 sm:p-8 w-full xl:w-96 text-white order-3-lg xl:order-3-lg">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">📝 Game Log</h2>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-base sm:text-lg font-semibold mb-3 text-blue-400">Recent Moves</h3>
+                    <div id="move-history" class="bg-slate-700 rounded-lg p-3 sm:p-4 h-64 overflow-y-auto">
+                        <div class="text-sm text-gray-400 text-center">Game hasn't started yet</div>
+                    </div>
+                </div>
+                
+                <div class="game-info">
+                    <h3 class="text-base sm:text-lg font-semibold mb-3 text-green-400">📊 Statistics</h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-slate-800 rounded-lg p-3 text-center">
+                            <div class="text-xl sm:text-2xl font-bold text-red-400" id="total-captures">0</div>
+                            <div class="text-gray-300">Captures</div>
+                        </div>
+                        <div class="bg-slate-800 rounded-lg p-3 text-center">
+                            <div class="text-xl sm:text-2xl font-bold text-yellow-400" id="checks-given">0</div>
+                            <div class="text-gray-300">Checks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="waiting-overlay" class="waiting-overlay">
+            <div class="waiting-content">
+                <div class="text-6xl mb-4 spinning">⏳</div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Waiting for Players...</h2>
+                <p class="text-gray-300 mb-6 text-sm sm:text-base">
+                    <span id="waiting-message">Looking for another player to join the game</span>
+                </p>
+                <div class="flex justify-center space-x-4">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="celebration-modal" class="celebration-modal">
+            <div class="celebration-content">
+                <h2 id="celebration-message" class="text-4xl font-bold text-white mb-4"></h2>
+                <p class="text-lg text-gray-300 mb-6">Game Over!</p>
+                <button onclick="hideCelebration()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="script.js"></script> </body>
+
+</html>
