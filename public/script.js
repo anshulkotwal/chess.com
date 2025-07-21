@@ -550,8 +550,7 @@ function promptForPromotion(fromSq, toSq) {
 
 // --- Socket.IO Event Handlers ---
 document.addEventListener('DOMContentLoaded', () => {
-    socket = io();
-
+   const socket = io('https://chess-com-delta.vercel.app/');
     updateConnectionStatus('connecting');
 
     socket.on('connect', () => {
