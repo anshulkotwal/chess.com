@@ -27,14 +27,15 @@ const checksGivenElem = document.getElementById('checks-given');
 const waitingOverlay = document.getElementById('waiting-overlay');
 const waitingMessage = document.getElementById('waiting-message');
 const celebrationModal = document.getElementById('celebration-modal');
-const celebrationMessage = document.getElementById('celebration-message');
+// *** CORRECTION START ***
+let celebrationMessage = document.getElementById('celebration-message'); // Changed from const to let
+// *** CORRECTION END ***
 const connectionStatusElem = document.getElementById('connection-status');
 const rankCoordsElem = document.getElementById('rank-coords');
 const fileCoordsElem = document.getElementById('file-coords');
 
 
 // --- Game State Variables (Client-side) ---
-let socket;
 let currentBoard = [];
 let playerColor = null; // 'white', 'black', or null (for spectator)
 let selectedPieceSquare = null; // HTMLDivElement representing the selected square
@@ -48,7 +49,6 @@ let totalCaptures = 0;
 let checksGiven = 0;
 
 // --- Sound Effects ---
-// Use try-catch for Audio to handle NotSupportedError gracefully, especially on initial load
 let moveSound;
 let captureSound;
 let checkSound;
@@ -83,6 +83,17 @@ try {
     }
 }
 
+/**
+ * Plays a sound effect if sound is enabled.
+ * Catches potential errors if the audio cannot be played (e.g., autoplay policies).
+ * @param {HTMLAudioElement} sound - The audio element to play.
+ */
+function playSound(sound) {
+    if (soundEnabled && sound) {
+        sound.play().catch(e => console.warn("Error playing sound:", e.message));
+    }
+}
+
 
 // --- Piece Unicode Mapping ---
 const pieceUnicode = {
@@ -100,27 +111,35 @@ function getPieceHTML(piece) {
 }
 
 function updateBoardUI(board, lastMove = null) {
+    if (!chessboard) {
+        console.error("Chessboard element not found. Cannot update UI.");
+        return;
+    }
     chessboard.innerHTML = ''; // Clear existing board
     const rankCoords = ['8', '7', '6', '5', '4', '3', '2', '1'];
     const fileCoords = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
     // Update coordinates display
-    rankCoordsElem.innerHTML = '';
-    fileCoordsElem.innerHTML = '';
+    if (rankCoordsElem) rankCoordsElem.innerHTML = '';
+    if (fileCoordsElem) fileCoordsElem.innerHTML = '';
 
     const displayRankCoords = isBoardFlipped ? [...rankCoords] : [...rankCoords].reverse();
     const displayFileCoords = isBoardFlipped ? [...fileCoords].reverse() : [...fileCoords];
 
     displayRankCoords.forEach(rank => {
-        const span = document.createElement('span');
-        span.textContent = rank;
-        rankCoordsElem.appendChild(span);
+        if (rankCoordsElem) {
+            const span = document.createElement('span');
+            span.textContent = rank;
+            rankCoordsElem.appendChild(span);
+        }
     });
 
     displayFileCoords.forEach(file => {
-        const span = document.createElement('span');
-        span.textContent = file;
-        fileCoordsElem.appendChild(span);
+        if (fileCoordsElem) {
+            const span = document.createElement('span');
+            span.textContent = file;
+            fileCoordsElem.appendChild(span);
+        }
     });
 
 
@@ -129,7 +148,6 @@ function updateBoardUI(board, lastMove = null) {
     } else {
         chessboard.classList.remove('flipped');
     }
-
 
     board.forEach((row, rowIndex) => {
         row.forEach((piece, colIndex) => {
@@ -174,141 +192,162 @@ function renderBoard(boardData, lastMove = null) {
 }
 
 function updateScoreboard(whiteScore, blackScore, capturedPiecesWhite, capturedPiecesBlack) {
-    whiteScoreElem.textContent = whiteScore;
-    blackScoreElem.textContent = blackScore;
+    if (whiteScoreElem) whiteScoreElem.textContent = whiteScore;
+    if (blackScoreElem) blackScoreElem.textContent = blackScore;
 
-    whiteCapturedPieces.innerHTML = '';
-    blackCapturedPieces.innerHTML = '';
+    if (whiteCapturedPieces) whiteCapturedPieces.innerHTML = '';
+    if (blackCapturedPieces) blackCapturedPieces.innerHTML = '';
 
     // Render captured pieces
     capturedPiecesWhite.forEach(pieceChar => {
-        const span = document.createElement('span');
-        span.classList.add('captured-piece', 'black'); // Captured black pieces shown on white's side
-        span.textContent = pieceUnicode[pieceChar.toLowerCase()];
-        whiteCapturedPieces.appendChild(span);
+        if (whiteCapturedPieces) {
+            const span = document.createElement('span');
+            span.classList.add('captured-piece', 'black'); // Captured black pieces shown on white's side
+            span.textContent = pieceUnicode[pieceChar.toLowerCase()];
+            whiteCapturedPieces.appendChild(span);
+        }
     });
 
     capturedPiecesBlack.forEach(pieceChar => {
-        const span = document.createElement('span');
-        span.classList.add('captured-piece', 'white'); // Captured white pieces shown on black's side
-        span.textContent = pieceUnicode[pieceChar.toUpperCase()];
-        blackCapturedPieces.appendChild(span);
+        if (blackCapturedPieces) {
+            const span = document.createElement('span');
+            span.classList.add('captured-piece', 'white'); // Captured white pieces shown on black's side
+            span.textContent = pieceUnicode[pieceChar.toUpperCase()];
+            blackCapturedPieces.appendChild(span);
+        }
     });
 
     // Animate score update (optional, but nice)
-    whiteScoreElem.classList.add('score-update');
-    blackScoreElem.classList.add('score-update');
+    if (whiteScoreElem) whiteScoreElem.classList.add('score-update');
+    if (blackScoreElem) blackScoreElem.classList.add('score-update');
     setTimeout(() => {
-        whiteScoreElem.classList.remove('score-update');
-        blackScoreElem.classList.remove('score-update');
+        if (whiteScoreElem) whiteScoreElem.classList.remove('score-update');
+        if (blackScoreElem) blackScoreElem.classList.remove('score-update');
     }, 500);
 }
 
 function updateTurnIndicator(turn) {
     gameTurn = turn;
     const turnColor = turn === 'w' ? 'White' : 'Black';
-    currentTurnElem.textContent = turnColor;
-    turnIndicator.textContent = `${turnColor}'s Turn`;
+    if (currentTurnElem) currentTurnElem.textContent = turnColor;
+    if (turnIndicator) turnIndicator.textContent = `${turnColor}'s Turn`;
 
     // Highlight active player card based on player's role and current turn
-    whitePlayerCard.classList.remove('your-turn');
-    blackPlayerCard.classList.remove('your-turn');
-    whiteStatusIndicator.classList.remove('status-active', 'status-inactive', 'status-waiting');
-    blackStatusIndicator.classList.remove('status-active', 'status-inactive', 'status-waiting');
+    whitePlayerCard?.classList.remove('your-turn');
+    blackPlayerCard?.classList.remove('your-turn');
+    whiteStatusIndicator?.classList.remove('status-active', 'status-inactive', 'status-waiting');
+    blackStatusIndicator?.classList.remove('status-active', 'status-inactive', 'status-waiting');
 
 
     if (playerColor === 'white') {
         if (turn === 'w') {
-            whitePlayerCard.classList.add('your-turn');
-            whiteStatusIndicator.classList.add('status-active');
-            blackStatusIndicator.classList.add('status-inactive');
+            whitePlayerCard?.classList.add('your-turn');
+            whiteStatusIndicator?.classList.add('status-active');
+            blackStatusIndicator?.classList.add('status-inactive');
         } else {
-            blackPlayerCard.classList.add('your-turn'); // Opponent's turn
-            whiteStatusIndicator.classList.add('status-inactive');
-            blackStatusIndicator.classList.add('status-active');
+            blackPlayerCard?.classList.add('your-turn'); // Opponent's turn
+            whiteStatusIndicator?.classList.add('status-inactive');
+            blackStatusIndicator?.classList.add('status-active');
         }
     } else if (playerColor === 'black') {
         if (turn === 'b') {
-            blackPlayerCard.classList.add('your-turn');
-            blackStatusIndicator.classList.add('status-active');
-            whiteStatusIndicator.classList.add('status-inactive');
+            blackPlayerCard?.classList.add('your-turn');
+            blackStatusIndicator?.classList.add('status-active');
+            whiteStatusIndicator?.classList.add('status-inactive');
         } else {
-            whitePlayerCard.classList.add('your-turn'); // Opponent's turn
-            blackStatusIndicator.classList.add('status-inactive');
-            whiteStatusIndicator.classList.add('status-active');
+            whitePlayerCard?.classList.add('your-turn'); // Opponent's turn
+            blackStatusIndicator?.classList.add('status-inactive');
+            whiteStatusIndicator?.classList.add('status-active');
         }
     } else { // Spectator mode
         if (turn === 'w') {
-            whiteStatusIndicator.classList.add('status-active');
-            blackStatusIndicator.classList.add('status-inactive');
+            whiteStatusIndicator?.classList.add('status-active');
+            blackStatusIndicator?.classList.add('status-inactive');
         } else {
-            blackStatusIndicator.classList.add('status-active');
-            whiteStatusIndicator.classList.add('status-inactive');
+            blackStatusIndicator?.classList.add('status-active');
+            whiteStatusIndicator?.classList.add('status-inactive');
         }
     }
 }
 
 function updateMoveCount(count) {
-    moveCountElem.textContent = Math.ceil(count / 2); // Display full moves (2 half-moves per full move)
+    if (moveCountElem) moveCountElem.textContent = Math.ceil(count / 2); // Display full moves (2 half-moves per full move)
 }
 
 function updateGameTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    gameTimeElem.textContent = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    if (gameTimeElem) gameTimeElem.textContent = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
 }
 
 function showWaitingOverlay(message) {
-    waitingMessage.textContent = message;
-    waitingOverlay.style.display = 'flex';
+    if (waitingMessage) waitingMessage.textContent = message;
+    if (waitingOverlay) waitingOverlay.style.display = 'flex';
 }
 
 function hideWaitingOverlay() {
-    waitingOverlay.style.display = 'none';
+    if (waitingOverlay) waitingOverlay.style.display = 'none';
 }
 
 function showCelebrationModal(message) {
-    celebrationMessage.textContent = message;
-    celebrationModal.style.display = 'flex';
-    // Add confetti animation
-    // Clear previous confetti
-    celebrationModal.querySelectorAll('.confetti').forEach(c => c.remove());
+    if (celebrationMessage) celebrationMessage.textContent = message;
+    if (celebrationModal) {
+        celebrationModal.style.display = 'flex';
+        // Add confetti animation
+        // Clear previous confetti
+        celebrationModal.querySelectorAll('.confetti').forEach(c => c.remove());
 
-    for (let i = 0; i < 50; i++) {
-        const confetti = document.createElement('div');
-        confetti.classList.add('confetti');
-        confetti.style.left = `${Math.random() * 100}%`;
-        confetti.style.animationDuration = `${2 + Math.random() * 3}s`;
-        confetti.style.animationDelay = `${Math.random() * 2}s`;
-        celebrationModal.querySelector('.celebration-content').appendChild(confetti);
+        const celebrationContent = celebrationModal.querySelector('.celebration-content');
+        if (celebrationContent) {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.animationDuration = `${2 + Math.random() * 3}s`;
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                celebrationContent.appendChild(confetti);
+            }
+        }
+        playSound(gameOverSound);
     }
-    if (soundEnabled && gameOverSound) gameOverSound.play();
 }
 
 function hideCelebration() {
-    celebrationModal.style.display = 'none';
-    // Reset content to ensure confetti is removed
-    celebrationModal.querySelector('.celebration-content').innerHTML = `
-        <h2 id="celebration-message" class="text-4xl font-bold text-white mb-4"></h2>
-        <p class="text-lg text-gray-300 mb-6">Game Over!</p>
-        <button onclick="hideCelebration()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">
-            Close
-        </button>
-    `;
+    if (celebrationModal) {
+        celebrationModal.style.display = 'none';
+        // Reset content to ensure confetti is removed
+        const celebrationContent = celebrationModal.querySelector('.celebration-content');
+        if (celebrationContent) {
+            celebrationContent.innerHTML = `
+                <h2 id="celebration-message" class="text-4xl font-bold text-white mb-4"></h2>
+                <p class="text-lg text-gray-300 mb-6">Game Over!</p>
+                <button onclick="hideCelebration()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">
+                    Close
+                </button>
+            `;
+            // Re-set the celebration message element reference as innerHTML was reset
+            // *** CORRECTION START ***
+            celebrationMessage = document.getElementById('celebration-message'); // This line was causing the error
+            // *** CORRECTION END ***
+        }
+    }
 }
 
 function updateConnectionStatus(status) {
-    connectionStatusElem.className = `connection-status ${status}`;
-    if (status === 'connected') {
-        connectionStatusElem.textContent = '✅ Connected';
-    } else if (status === 'disconnected') {
-        connectionStatusElem.textContent = '❌ Disconnected';
-    } else if (status === 'connecting') {
-        connectionStatusElem.textContent = '🔄 Connecting...';
+    if (connectionStatusElem) {
+        connectionStatusElem.className = `connection-status ${status}`;
+        if (status === 'connected') {
+            connectionStatusElem.textContent = '✅ Connected';
+        } else if (status === 'disconnected') {
+            connectionStatusElem.textContent = '❌ Disconnected';
+        } else if (status === 'connecting') {
+            connectionStatusElem.textContent = '🔄 Connecting...';
+        }
     }
 }
 
 function updateMoveHistory(history) {
+    if (!moveHistoryElem) return;
     moveHistoryElem.innerHTML = ''; // Clear previous history
     if (history.length === 0) {
         moveHistoryElem.innerHTML = '<div class="text-sm text-gray-400 text-center">Game hasn\'t started yet</div>';
@@ -327,6 +366,7 @@ function updateMoveHistory(history) {
 // --- Drag and Drop Logic ---
 
 function addDragDropListeners() {
+    if (!chessboard) return; // Ensure chessboard exists before adding listeners
     const pieces = chessboard.querySelectorAll('.piece');
     let draggedPieceElement = null; // Store the HTML element being dragged
 
@@ -357,8 +397,10 @@ function addDragDropListeners() {
             draggedPieceElement.classList.add('dragging');
 
             // Request valid moves from server for the selected piece
-            const fromSq = selectedPieceSquare.dataset.squareId; // Get FEN notation (e.g., 'a1')
-            socket.emit('requestValidMoves', { from: fromSq });
+            const fromSq = selectedPieceSquare?.dataset.squareId; // Use optional chaining for safety
+            if (fromSq && socket) { // Ensure socket exists
+                socket.emit('requestValidMoves', { from: fromSq });
+            }
         });
 
         piece.addEventListener('dragend', () => {
@@ -396,7 +438,7 @@ function addDragDropListeners() {
             if (isValid) {
                 const pieceType = draggedPieceElement.dataset.piece;
                 const pieceColor = draggedPieceElement.dataset.color;
-                const targetRank = parseInt(toSq[1]); // Get the rank from 'a1' -> 1
+                const targetRank = Number(toSq[1]); // Use Number() for clarity
 
                 const isPawnPromotion = (pieceType === 'p' && (
                     (pieceColor === 'w' && targetRank === 8) ||
@@ -406,12 +448,11 @@ function addDragDropListeners() {
                 if (isPawnPromotion) {
                     promptForPromotion(fromSq, toSq);
                 } else {
-                    socket.emit('move', { from: fromSq, to: toSq });
+                    if (socket) socket.emit('move', { from: fromSq, to: toSq });
                 }
             } else {
                 console.log('Invalid move attempt from drag/drop.');
-                // Optionally provide visual feedback for invalid move
-                if (soundEnabled && clickSound) clickSound.play(); // Play a "fail" sound
+                playSound(clickSound); // Play a "fail" sound
             }
 
             // Clean up drag state regardless of move validity
@@ -443,9 +484,9 @@ function addDragDropListeners() {
                 const isValid = validMoves.some(move => move.to === toSq);
 
                 if (isValid) {
-                    const pieceType = selectedPieceSquare.querySelector('.piece').dataset.piece;
-                    const pieceColor = selectedPieceSquare.querySelector('.piece').dataset.color;
-                    const targetRank = parseInt(toSq[1]);
+                    const pieceType = selectedPieceSquare.querySelector('.piece')?.dataset.piece; // Optional chaining
+                    const pieceColor = selectedPieceSquare.querySelector('.piece')?.dataset.color; // Optional chaining
+                    const targetRank = Number(toSq[1]);
 
                     const isPawnPromotion = (pieceType === 'p' && (
                         (pieceColor === 'w' && targetRank === 8) ||
@@ -455,7 +496,7 @@ function addDragDropListeners() {
                     if (isPawnPromotion) {
                         promptForPromotion(fromSq, toSq);
                     } else {
-                        socket.emit('move', { from: fromSq, to: toSq });
+                        if (socket) socket.emit('move', { from: fromSq, to: toSq });
                     }
                 } else if (clickedPiece) {
                     // If clicking on a new piece:
@@ -471,13 +512,14 @@ function addDragDropListeners() {
                         // Select new piece
                         selectedPieceSquare = clickedSquare;
                         selectedPieceSquare.classList.add('bg-blue-400', 'bg-opacity-50');
-                        socket.emit('requestValidMoves', { from: clickedSqId });
+                        if (socket) socket.emit('requestValidMoves', { from: clickedSqId });
                     } else {
                         // Clicking on an opponent's piece or invalid move target, deselect
                         selectedPieceSquare.classList.remove('bg-blue-400', 'bg-opacity-50');
                         document.querySelectorAll('.square.valid-move').forEach(s => s.classList.remove('valid-move'));
                         selectedPieceSquare = null;
                         validMoves = [];
+                        playSound(clickSound); // Play a "fail" sound
                     }
                 } else {
                     // Clicking on an empty square that is not a valid move target, deselect
@@ -485,7 +527,7 @@ function addDragDropListeners() {
                     document.querySelectorAll('.square.valid-move').forEach(s => s.classList.remove('valid-move'));
                     selectedPieceSquare = null;
                     validMoves = [];
-                    if (soundEnabled && clickSound) clickSound.play(); // Play a "fail" sound
+                    playSound(clickSound); // Play a "fail" sound
                 }
             } else {
                 // No piece selected, try to select one
@@ -496,14 +538,14 @@ function addDragDropListeners() {
                     if (isCurrentPlayerPiece && gameActive && gameTurn === pieceColor) {
                         selectedPieceSquare = clickedSquare;
                         selectedPieceSquare.classList.add('bg-blue-400', 'bg-opacity-50');
-                        socket.emit('requestValidMoves', { from: clickedSqId });
+                        if (socket) socket.emit('requestValidMoves', { from: clickedSqId });
                     } else {
-                         // Clicked on opponent's piece or a spectator tried to click
-                         if (soundEnabled && clickSound) clickSound.play();
+                        // Clicked on opponent's piece or a spectator tried to click
+                        playSound(clickSound);
                     }
                 } else {
                     // Clicked on empty square with no piece selected
-                    if (soundEnabled && clickSound) clickSound.play();
+                    playSound(clickSound);
                 }
             }
         });
@@ -534,7 +576,7 @@ function promptForPromotion(fromSq, toSq) {
     modal.querySelectorAll('.promotion-option').forEach(button => {
         button.addEventListener('click', () => {
             const promotionType = button.dataset.promotion;
-            socket.emit('move', { from: fromSq, to: toSq, promotion: promotionType });
+            if (socket) socket.emit('move', { from: fromSq, to: toSq, promotion: promotionType });
             document.body.removeChild(modal);
             // After promotion, clear selected state and highlights
             if (selectedPieceSquare) {
@@ -548,9 +590,19 @@ function promptForPromotion(fromSq, toSq) {
 }
 
 
+let socket; // Declared at the top, outside the DOMContentLoaded for broader scope
+
 // --- Socket.IO Event Handlers ---
 document.addEventListener('DOMContentLoaded', () => {
-   const socket = io('http://localhost:3000/');
+    // Check if io is defined (Socket.IO client library loaded)
+    if (typeof io === 'undefined') {
+        console.error("Socket.IO client library not found. Please ensure 'socket.io.js' is loaded before 'script.js'.");
+        updateConnectionStatus('disconnected');
+        gameStatusElem.textContent = 'Error: Socket.IO library missing.';
+        return;
+    }
+
+    socket = io('http://localhost:3000/');
     updateConnectionStatus('connecting');
 
     socket.on('connect', () => {
@@ -565,22 +617,24 @@ document.addEventListener('DOMContentLoaded', () => {
         updateConnectionStatus('disconnected');
         gameActive = false;
         clearInterval(gameInterval);
-        gameStatusElem.textContent = 'Disconnected from server.';
+        if (gameStatusElem) gameStatusElem.textContent = 'Disconnected from server.';
         showWaitingOverlay("You have been disconnected. Please refresh to reconnect.");
     });
 
     socket.on('connect_error', (err) => {
         console.error('Connection Error:', err);
         updateConnectionStatus('disconnected');
-        gameStatusElem.textContent = 'Connection error. Please check your internet.';
+        if (gameStatusElem) gameStatusElem.textContent = 'Connection error. Please check your internet.';
         showWaitingOverlay("Connection error. Please refresh the page.");
     });
 
     socket.on('playerRole', ({ role, gameId }) => {
         playerColor = role;
-        playerRoleElem.textContent = role.charAt(0).toUpperCase() + role.slice(1);
-        roleBadge.textContent = role.charAt(0).toUpperCase() + role.slice(1);
-        roleBadge.className = `role-badge ${role === 'white' ? 'role-white' : role === 'black' ? 'role-black' : 'role-spectator'}`;
+        if (playerRoleElem) playerRoleElem.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        if (roleBadge) {
+            roleBadge.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+            roleBadge.className = `role-badge ${role === 'white' ? 'role-white' : role === 'black' ? 'role-black' : 'role-spectator'}`;
+        }
         console.log(`You are playing as: ${role}`);
 
         isBoardFlipped = (playerColor === 'black'); // Flip if black, unflip if white or spectator
@@ -588,34 +642,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('spectatorCount', (count) => {
-        spectatorCountElem.textContent = count;
+        if (spectatorCountElem) spectatorCountElem.textContent = count;
     });
 
     socket.on('waitingForPlayer', ({ message }) => {
         showWaitingOverlay(message);
         gameActive = false;
         clearInterval(gameInterval); // Stop any existing timer
-        chessboard.innerHTML = ''; // Clear board
-        gameStatusElem.textContent = 'Waiting for players...';
-        currentTurnElem.textContent = 'N/A';
-        turnIndicator.textContent = 'Waiting...';
-        moveCountElem.textContent = '0';
-        gameTimeElem.textContent = '0:00';
-        whiteCapturedPieces.innerHTML = '';
-        blackCapturedPieces.innerHTML = '';
-        whiteScoreElem.textContent = '0';
-        blackScoreElem.textContent = '0';
-        moveHistoryElem.innerHTML = '<div class="text-sm text-gray-400 text-center">Game hasn\'t started yet</div>';
+        if (chessboard) chessboard.innerHTML = ''; // Clear board
+        if (gameStatusElem) gameStatusElem.textContent = 'Waiting for players...';
+        if (currentTurnElem) currentTurnElem.textContent = 'N/A';
+        if (turnIndicator) turnIndicator.textContent = 'Waiting...';
+        if (moveCountElem) moveCountElem.textContent = '0';
+        if (gameTimeElem) gameTimeElem.textContent = '0:00';
+        if (whiteCapturedPieces) whiteCapturedPieces.innerHTML = '';
+        if (blackCapturedPieces) blackCapturedPieces.innerHTML = '';
+        if (whiteScoreElem) whiteScoreElem.textContent = '0';
+        if (blackScoreElem) blackScoreElem.textContent = '0';
+        updateMoveHistory([]); // Always call the function, it handles empty state
         totalCaptures = 0;
         checksGiven = 0;
-        totalCapturesElem.textContent = '0';
-        checksGivenElem.textContent = '0';
-        whitePlayerCard.classList.remove('your-turn');
-        blackPlayerCard.classList.remove('your-turn');
-        whiteStatusIndicator.classList.remove('status-active', 'status-inactive', 'status-waiting');
-        whiteStatusIndicator.classList.add('status-waiting');
-        blackStatusIndicator.classList.remove('status-active', 'status-inactive', 'status-waiting');
-        blackStatusIndicator.classList.add('status-waiting');
+        if (totalCapturesElem) totalCapturesElem.textContent = '0';
+        if (checksGivenElem) checksGivenElem.textContent = '0';
+        whitePlayerCard?.classList.remove('your-turn');
+        blackPlayerCard?.classList.remove('your-turn');
+        whiteStatusIndicator?.classList.remove('status-active', 'status-inactive', 'status-waiting');
+        whiteStatusIndicator?.classList.add('status-waiting');
+        blackStatusIndicator?.classList.remove('status-active', 'status-inactive', 'status-waiting');
+        blackStatusIndicator?.classList.add('status-waiting');
         hideCelebration(); // Hide any lingering celebration
     });
 
@@ -639,19 +693,15 @@ document.addEventListener('DOMContentLoaded', () => {
         updateScoreboard(whiteScore, blackScore, [], []); // Start with empty captured arrays
         updateMoveCount(moveCount);
         updateMoveHistory([]); // Clear move history
-        gameStatusElem.textContent = 'Game in Progress';
+        if (gameStatusElem) gameStatusElem.textContent = 'Game in Progress';
         totalCaptures = 0;
         checksGiven = 0;
-        totalCapturesElem.textContent = '0';
-        checksGivenElem.textContent = '0';
+        if (totalCapturesElem) totalCapturesElem.textContent = '0';
+        if (checksGivenElem) checksGivenElem.textContent = '0';
 
         // Update player status indicators
-        if (playerColor === 'white' && turn === 'w' || playerColor === 'black' && turn === 'b') {
-            updateTurnIndicator(turn); // Will highlight own card and status
-        } else {
-            // For spectator or opponent, just show active/inactive status
-            updateTurnIndicator(turn);
-        }
+        // The updateTurnIndicator function already handles this logic based on playerColor and turn.
+        updateTurnIndicator(turn);
 
         console.log('Game started!');
     });
@@ -661,39 +711,44 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTurnIndicator(turn);
         updateMoveCount(moveCount);
         updateMoveHistory(history);
+        updateScoreboard(whiteScore, blackScore, capturedWhite, capturedBlack); // Always update scores and captured pieces
 
         if (capturedPiece) {
-            if (soundEnabled && captureSound) captureSound.play();
+            playSound(captureSound);
             totalCaptures++;
-            totalCapturesElem.textContent = totalCaptures;
-            updateScoreboard(whiteScore, blackScore, capturedWhite, capturedBlack);
+            if (totalCapturesElem) totalCapturesElem.textContent = totalCaptures;
         } else {
-            if (soundEnabled && moveSound) moveSound.play(); // Play move sound if no capture
+            playSound(moveSound); // Play move sound if no capture
         }
 
         if (isCheck) {
-            if (soundEnabled && checkSound) checkSound.play();
+            playSound(checkSound);
             checksGiven++;
-            checksGivenElem.textContent = checksGiven;
-            gameStatusElem.textContent = `${turn === 'w' ? 'Black' : 'White'} is in Check!`;
-            gameStatusElem.classList.add('text-red-500');
+            if (checksGivenElem) checksGivenElem.textContent = checksGiven;
+            if (gameStatusElem) {
+                gameStatusElem.textContent = `${turn === 'w' ? 'Black' : 'White'} is in Check!`;
+                gameStatusElem.classList.add('text-red-500');
+            }
         } else {
-            gameStatusElem.textContent = 'Game in Progress';
-            gameStatusElem.classList.remove('text-red-500');
+            if (gameStatusElem) {
+                gameStatusElem.textContent = 'Game in Progress';
+                gameStatusElem.classList.remove('text-red-500');
+            }
         }
-
-        // Re-attach drag/drop listeners after board update (done within renderBoard)
-        // addDragDropListeners(); // Redundant as renderBoard calls it
     });
 
     socket.on('invalidMove', ({ message }) => {
         console.warn('Invalid move:', message);
-        gameStatusElem.textContent = `Invalid Move: ${message}`;
-        gameStatusElem.classList.add('text-red-500');
-        if (soundEnabled && clickSound) clickSound.play(); // Play a "fail" sound
+        if (gameStatusElem) {
+            gameStatusElem.textContent = `Invalid Move: ${message}`;
+            gameStatusElem.classList.add('text-red-500');
+        }
+        playSound(clickSound); // Play a "fail" sound
         setTimeout(() => {
-            gameStatusElem.classList.remove('text-red-500');
-            gameStatusElem.textContent = gameActive ? 'Game in Progress' : 'Waiting for players...';
+            if (gameStatusElem) {
+                gameStatusElem.classList.remove('text-red-500');
+                gameStatusElem.textContent = gameActive ? 'Game in Progress' : 'Waiting for players...';
+            }
         }, 3000);
         // Request current board state from server to resync UI if client state is wrong
         socket.emit('requestInitialState'); // More robust than just requestBoardState
@@ -720,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('gameOver', ({ winner, reason }) => {
         gameActive = false;
         clearInterval(gameInterval);
-        gameStatusElem.textContent = `Game Over! ${winner} wins by ${reason}!`;
+        if (gameStatusElem) gameStatusElem.textContent = `Game Over! ${winner} wins by ${reason}!`;
         showCelebrationModal(`${winner} Wins!`);
         console.log(`Game Over: ${winner} wins by ${reason}`);
     });
@@ -728,99 +783,61 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('gameReset', () => {
         gameActive = false;
         clearInterval(gameInterval);
-        gameStatusElem.textContent = 'Game Reset. Waiting for players...';
-        currentTurnElem.textContent = 'N/A';
-        turnIndicator.textContent = 'Waiting...';
-        moveCountElem.textContent = '0';
-        gameTimeElem.textContent = '0:00';
-        whiteCapturedPieces.innerHTML = '';
-        blackCapturedPieces.innerHTML = '';
-        whiteScoreElem.textContent = '0';
-        blackScoreElem.textContent = '0';
-        moveHistoryElem.innerHTML = '<div class="text-sm text-gray-400 text-center">Game hasn\'t started yet</div>';
-        totalCaptures = 0;
-        checksGiven = 0;
-        totalCapturesElem.textContent = '0';
-        checksGivenElem.textContent = '0';
-        renderBoard([]); // Clear the board visually
-        whitePlayerCard.classList.remove('your-turn');
-        blackPlayerCard.classList.remove('your-turn');
-        whiteStatusIndicator.classList.remove('status-active', 'status-inactive');
-        whiteStatusIndicator.classList.add('status-waiting');
-        blackStatusIndicator.classList.remove('status-active', 'status-inactive');
-        blackStatusIndicator.classList.add('status-waiting');
-        hideCelebration(); // Ensure celebration modal is hidden
-    });
-
-    socket.on('playerDisconnected', ({ message }) => {
-        gameActive = false;
-        clearInterval(gameInterval);
-        gameStatusElem.textContent = message;
-        gameStatusElem.classList.add('text-red-500');
-        showWaitingOverlay("Opponent disconnected. Starting a new search for players...");
-        // Reset board and UI state
-        renderBoard([]);
-        updateTurnIndicator('w'); // Reset turn display
-        updateScoreboard(0, 0, [], []);
-        updateMoveCount(0);
+        if (gameStatusElem) gameStatusElem.textContent = 'Game Reset. Waiting for players...';
+        if (currentTurnElem) currentTurnElem.textContent = 'N/A';
+        if (turnIndicator) turnIndicator.textContent = 'Waiting...';
+        if (moveCountElem) moveCountElem.textContent = '0';
+        if (gameTimeElem) gameTimeElem.textContent = '0:00';
+        if (whiteCapturedPieces) whiteCapturedPieces.innerHTML = '';
+        if (blackCapturedPieces) blackCapturedPieces.innerHTML = '';
+        if (whiteScoreElem) whiteScoreElem.textContent = '0';
+        if (blackScoreElem) blackScoreElem.textContent = '0';
         updateMoveHistory([]);
         totalCaptures = 0;
         checksGiven = 0;
-        totalCapturesElem.textContent = '0';
-        checksGivenElem.textContent = '0';
+        if (totalCapturesElem) totalCapturesElem.textContent = '0';
+        if (checksGivenElem) checksGivenElem.textContent = '0';
+        whitePlayerCard?.classList.remove('your-turn');
+        blackPlayerCard?.classList.remove('your-turn');
+        whiteStatusIndicator?.classList.remove('status-active', 'status-inactive', 'status-waiting');
+        whiteStatusIndicator?.classList.add('status-waiting');
+        blackStatusIndicator?.classList.remove('status-active', 'status-inactive', 'status-waiting');
+        blackStatusIndicator?.classList.add('status-waiting');
+        hideCelebration(); // Ensure celebration modal is hidden
     });
 
-    socket.on('requestBoardStateResponse', ({ board, turn, whiteScore, blackScore, moveCount, history, capturedWhite, capturedBlack, isCheck }) => {
-        // This handler helps in re-syncing the board, e.g., after an invalid move or reconnection
-        renderBoard(board);
-        updateTurnIndicator(turn);
-        updateScoreboard(whiteScore, blackScore, capturedWhite, capturedBlack);
-        updateMoveCount(moveCount);
-        updateMoveHistory(history);
-        if (isCheck) {
-            gameStatusElem.textContent = `${turn === 'w' ? 'Black' : 'White'} is in Check!`;
-            gameStatusElem.classList.add('text-red-500');
-        } else {
-            gameStatusElem.textContent = 'Game in Progress';
-            gameStatusElem.classList.remove('text-red-500');
-        }
-        // addDragDropListeners(); // Renderboard calls it.
-        hideWaitingOverlay(); // Ensure overlay is hidden if game is re-synced
-    });
+    // Add event listeners for newGameBtn, soundToggleBtn, volumeSlider if they exist
+    if (newGameBtn) {
+        newGameBtn.addEventListener('click', () => {
+            if (socket) socket.emit('newGame');
+        });
+    }
 
+    if (soundToggleBtn) {
+        soundToggleBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            if (soundEnabled) {
+                soundToggleBtn.textContent = 'ON';
+                soundToggleBtn.classList.remove('bg-gray-600');
+                soundToggleBtn.classList.add('bg-green-600');
+                if (volumeSlider) volumeSlider.disabled = false;
+            } else {
+                soundToggleBtn.textContent = 'OFF';
+                soundToggleBtn.classList.remove('bg-green-600');
+                soundToggleBtn.classList.add('bg-gray-600');
+                if (volumeSlider) volumeSlider.disabled = true;
+            }
+        });
+    }
 
-    // --- Event Listeners for UI Actions ---
-    newGameBtn.addEventListener('click', () => {
-        if (soundEnabled && clickSound) clickSound.play();
-        socket.emit('newGameRequest');
-        gameStatusElem.textContent = 'Requesting new game...';
-    });
-
-    soundToggleBtn.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-        soundToggleBtn.textContent = soundEnabled ? 'ON' : 'OFF';
-        soundToggleBtn.classList.toggle('bg-green-600', soundEnabled);
-        soundToggleBtn.classList.toggle('bg-gray-600', !soundEnabled);
-
-        // Mute/unmute all sounds
-        if (moveSound) moveSound.muted = !soundEnabled;
-        if (captureSound) captureSound.muted = !soundEnabled;
-        if (checkSound) checkSound.muted = !soundEnabled;
-        if (gameOverSound) gameOverSound.muted = !soundEnabled;
-        if (clickSound) clickSound.muted = !soundEnabled;
-    });
-
-    volumeSlider.addEventListener('input', (e) => {
-        const volume = e.target.value / 100;
-        if (moveSound) moveSound.volume = volume;
-        if (captureSound) captureSound.volume = volume;
-        if (checkSound) checkSound.volume = volume;
-        if (gameOverSound) gameOverSound.volume = volume;
-        if (clickSound) clickSound.volume = volume;
-    });
-
-    // Initial setup on load
-    updateGameTime(0);
-    // Initial call to hide or show overlay based on server state (will be updated by socket events)
-    showWaitingOverlay("Connecting to server...");
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            if (moveSound) moveSound.volume = volume;
+            if (captureSound) captureSound.volume = volume;
+            if (checkSound) checkSound.volume = volume;
+            if (gameOverSound) gameOverSound.volume = volume;
+            if (clickSound) clickSound.volume = volume;
+        });
+    }
 });

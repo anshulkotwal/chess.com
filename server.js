@@ -1,13 +1,28 @@
-// server.js
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const { Chess } = require('chess.js'); // Import chess.js
+const cors = require('cors'); // This import is for Express if you use app.use(cors)
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// IMPORTANT: Initialize Socket.IO Server ONCE with CORS configuration
+const io = new Server(server, {
+    cors: {
+        origin: 'https://chess-com-delta.vercel.app', // Specify your frontend origin
+        methods: ['GET', 'POST'] // Socket.IO typically uses GET and POST
+    }
+});
+
+// Configure CORS for Express if you have other API routes besides Socket.IO
+// If your server ONLY handles Socket.IO, this app.use(cors) might not be strictly necessary,
+// but it's good practice to include it if you foresee adding regular HTTP endpoints.
+app.use(cors({
+    origin: 'https://chess-com-delta.vercel.app',
+    methods: ['GET', 'POST']
+}));
+
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
@@ -19,6 +34,7 @@ const waitingPlayers = []; // Sockets waiting for a match
 const playerSockets = {}; // { gameId: { white: socket.id, black: socket.id } }
 const gameTimers = {}; // Stores setInterval IDs for game timers
 let spectatorCount = 0;
+const gameStartTime = {}; // Define this variable here, as it's used before the listen call
 
 // Utility function to generate a unique game ID (simple for now)
 function generateGameId() {
@@ -132,7 +148,7 @@ io.on('connection', (socket) => {
             // Filter captured pieces from the full history for scoreboard display
             const capturedWhite = game.history({ verbose: true }).filter(m => m.captured && m.color === 'b').map(m => m.captured);
             const capturedBlack = game.history({ verbose: true }).filter(m => m.captured && m.color === 'w').map(m => m.captured);
-            const isCheck = game.inCheck();
+            const isCheck = game.inCheck(); // This one is correctly `inCheck()`
 
             // Re-join the game room if not already in it
             if (!socket.rooms.has(gameId)) {
@@ -302,28 +318,30 @@ io.on('connection', (socket) => {
                 });
 
                 // Check for game over conditions
-                if (game.inCheckmate()) {
+                // *** CORRECTION START ***
+                if (game.isCheckmate()) { // Changed from game.inCheckmate()
                     const winnerColor = game.turn() === 'w' ? 'Black' : 'White';
                     io.to(gameId).emit('gameOver', { winner: winnerColor, reason: 'Checkmate' });
                     console.log(`Game ${gameId} ended: ${winnerColor} wins by Checkmate`);
                     resetGame(gameId);
-                } else if (game.inDraw()) {
+                } else if (game.isDraw()) { // Changed from game.inDraw() for consistency, although this one might have worked
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Draw' });
                     console.log(`Game ${gameId} ended: Draw`);
                     resetGame(gameId);
-                } else if (game.inStalemate()) {
+                } else if (game.isStalemate()) { // Changed from game.inStalemate()
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Stalemate' });
                     console.log(`Game ${gameId} ended: Stalemate`);
                     resetGame(gameId);
-                } else if (game.inThreefoldRepetition()) {
+                } else if (game.isThreefoldRepetition()) { // Changed from game.inThreefoldRepetition() for consistency
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Threefold Repetition' });
                     console.log(`Game ${gameId} ended: Threefold Repetition`);
                     resetGame(gameId);
-                } else if (game.insufficientMaterial()) {
+                } else if (game.isInsufficientMaterial()) { // Changed from game.insufficientMaterial() for consistency
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Insufficient Material' });
                     console.log(`Game ${gameId} ended: Insufficient Material`);
                     resetGame(gameId);
                 }
+                // *** CORRECTION END ***
             } else {
                 socket.emit('invalidMove', { message: 'Invalid move.' });
             }
@@ -347,7 +365,7 @@ io.on('connection', (socket) => {
     });
 
     // Handle new game requests
-    socket.on('newGameRequest', () => {
+    socket.on('newGameRequest', () => { // Changed from 'newGame' to 'newGameRequest' for clarity
         const playerInfo = players[socket.id];
         if (playerInfo.gameId) {
             // Player is already in a game, leave it first and reset
@@ -403,8 +421,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Object to store game start times for accurate timer updates on reconnect
-const gameStartTime = {};
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
