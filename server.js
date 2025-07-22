@@ -7,22 +7,17 @@ const cors = require('cors'); // This import is for Express if you use app.use(c
 const app = express();
 const server = http.createServer(app);
 
-// IMPORTANT: Initialize Socket.IO Server ONCE with CORS configuration
 const io = new Server(server, {
-    cors: {
-        origin: 'https://chess-com-delta.vercel.app/', // Specify your frontend origin
-        methods: ['GET', 'POST'] // Socket.IO typically uses GET and POST
-    }
+    cors: {
+        origin: 'https://chess-com-delta.vercel.app',
+        methods: ['GET', 'POST']
+    }
 });
 
-// Configure CORS for Express if you have other API routes besides Socket.IO
-// If your server ONLY handles Socket.IO, this app.use(cors) might not be strictly necessary,
-// but it's good practice to include it if you foresee adding regular HTTP endpoints.
 app.use(cors({
-    origin: 'https://chess-com-delta.vercel.app',
-    methods: ['GET', 'POST']
+    origin: 'https://chess-com-delta.vercel.app',
+    methods: ['GET', 'POST']
 }));
-
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
