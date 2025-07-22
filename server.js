@@ -10,7 +10,7 @@ const server = http.createServer(app);
 // IMPORTANT: Initialize Socket.IO Server ONCE with CORS configuration
 const io = new Server(server, {
     cors: {
-        origin: 'https://chess-com-delta.vercel.app', // Specify your frontend origin
+        origin: 'https://chess-com-delta.vercel.app/', // Specify your frontend origin
         methods: ['GET', 'POST'] // Socket.IO typically uses GET and POST
     }
 });

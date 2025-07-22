@@ -602,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    socket = io('http://localhost:3000/');
+    const socket = io('https://chess-com-delta.vercel.app/');
     updateConnectionStatus('connecting');
 
     socket.on('connect', () => {
