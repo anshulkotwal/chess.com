@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,70 +7,46 @@
     <link rel="icon" type="image/png" href="/favicon.ico">
     <style>
         @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         @keyframes bounce {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes confetti {
-            0% {
-                transform: translateY(-100vh) rotate(0deg);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
         }
 
         @keyframes celebrationBounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+            60% { transform: translateY(-15px); }
+        }
 
-            0%,
-            20%,
-            50%,
-            80%,
-            100% {
-                transform: translateY(0);
-            }
+        @keyframes firework {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1) rotate(180deg); opacity: 0.8; }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
 
-            40% {
-                transform: translateY(-30px);
-            }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
 
-            60% {
-                transform: translateY(-15px);
-            }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .chessboard {
@@ -79,9 +54,7 @@
             grid-template-columns: repeat(8, minmax(0, 1fr));
             grid-template-rows: repeat(8, minmax(0, 1fr));
             width: clamp(280px, 90vw, 480px);
-            /* Responsive width */
             height: clamp(280px, 90vw, 480px);
-            /* Responsive height */
             transform: rotate(0deg);
             border: 4px solid #8B4513;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
@@ -127,9 +100,26 @@
             background-color: rgba(16, 185, 129, 0.3);
         }
 
+        .square.valid-move::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(16, 185, 129, 0.6);
+        }
+
+        .square.selected {
+            background-color: rgba(245, 158, 11, 0.4);
+            box-shadow: inset 0 0 0 3px #f59e0b;
+        }
+
+        .square.last-move {
+            background-color: rgba(59, 130, 246, 0.3);
+        }
+
         .piece {
             font-size: clamp(30px, 8vw, 42px);
-            /* Responsive font size */
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
@@ -160,150 +150,30 @@
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
             width: 100%;
-            /* Full width on small screens */
             max-width: 400px;
-            /* Max width on larger screens */
         }
 
-        .score-update {
-            animation: scoreUpdate 0.5s ease-in-out;
-        }
-
-        @keyframes scoreUpdate {
-            0% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.1);
-            }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .captured-piece {
-            font-size: clamp(20px, 5vw, 24px);
-            /* Responsive font size */
-            margin: 2px;
-            opacity: 0.9;
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid transparent;
             transition: all 0.3s ease;
         }
 
-        .captured-piece:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        .status-indicator {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .status-active {
-            background-color: #10b981;
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+        .timer-active {
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
             animation: pulse 2s infinite;
         }
 
-        .status-inactive {
-            background-color: #6b7280;
-        }
-
-        .status-waiting {
-            background-color: #f59e0b;
+        .timer-low {
+            color: #ef4444;
+            border-color: #ef4444;
             animation: pulse 1s infinite;
-        }
-
-        .game-info {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            padding: 12px;
-            margin-top: 12px;
-            backdrop-filter: blur(5px);
-        }
-
-        .waiting-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .waiting-content {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            border: 2px solid #64748b;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .celebration-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            backdrop-filter: blur(10px);
-            display: none;
-            /* Hidden by default */
-        }
-
-        .celebration-content {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            padding: 60px;
-            border-radius: 24px;
-            text-align: center;
-            border: 3px solid #10b981;
-            box-shadow: 0 0 60px rgba(16, 185, 129, 0.3);
-            animation: celebrationBounce 1s ease-out;
-            position: relative;
-            /* For confetti */
-            overflow: hidden;
-            /* For confetti */
-        }
-
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #10b981;
-            animation: confetti 3s linear infinite;
-        }
-
-        .confetti:nth-child(2n) {
-            background: #f59e0b;
-        }
-
-        .confetti:nth-child(3n) {
-            background: #ef4444;
-        }
-
-        .confetti:nth-child(4n) {
-            background: #3b82f6;
-        }
-
-        .confetti:nth-child(5n) {
-            background: #8b5cf6;
         }
 
         .player-card {
@@ -315,15 +185,9 @@
             border: 2px solid transparent;
         }
 
-        .player-card.active {
-            border-color: #10b981;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-        }
-
         .player-card.your-turn {
             border-color: #f59e0b;
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-            animation: pulse 2s infinite;
         }
 
         .move-item {
@@ -340,46 +204,24 @@
             transform: translateX(4px);
         }
 
-        .role-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 8px;
+        .chat-container {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #64748b;
+            border-radius: 8px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
         }
 
-        .role-white {
-            background: #f8fafc;
-            color: #1e293b;
-        }
-
-        .role-black {
-            background: #1e293b;
-            color: #f8fafc;
-        }
-
-        .role-spectator {
-            background: #6b7280;
-            color: #f8fafc;
-        }
-
-        .spinning {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
+        .chat-message {
+            margin-bottom: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .connection-status {
-            position: absolute;
+            position: fixed;
             top: 20px;
             right: 20px;
             padding: 8px 16px;
@@ -404,79 +246,150 @@
             color: white;
         }
 
-        .board-coordinates {
-            position: absolute;
-            font-size: 12px;
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #64748b;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease-out;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .queue-position {
+            color: #f59e0b;
             font-weight: bold;
-            color: #8b5cf6;
+        }
+
+        /* Celebration Effects */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            z-index: 1001;
             pointer-events: none;
-            z-index: 1;
-            /* Ensure coordinates are above squares but below pieces */
         }
 
-        .coord-rank {
-            left: -20px;
-            height: 100%;
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confetti 3s linear infinite;
+        }
+
+        .firework {
+            position: fixed;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            z-index: 1001;
+            pointer-events: none;
+            animation: firework 2s ease-out infinite;
+        }
+
+        .celebration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1002;
+            pointer-events: none;
             display: flex;
-            flex-direction: column;
-            justify-content: space-around;
+            align-items: center;
+            justify-content: center;
         }
 
-        .coord-file {
-            bottom: -20px;
+        .celebration-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            animation: celebrationBounce 2s ease-in-out;
+        }
+
+        .loss-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1002;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .loss-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ff4444;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        .sound-control {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .sound-control:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+
+        .sound-control.muted {
+            background: rgba(255, 0, 0, 0.7);
+        }
+
+        /* Fixed UI for modals */
+        .settings-modal {
+            position: relative;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #64748b;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s ease-out;
             width: 100%;
-            display: flex;
-            justify-content: space-around;
+            max-width: 400px;
         }
 
-        /* Adjustments for smaller screens */
         @media (max-width: 1024px) {
-            .flex-col-reverse-lg {
-                flex-direction: column-reverse;
-                /* Stack scoreboard below board on mobile */
-            }
-
-            .order-1-lg {
-                order: 1;
-            }
-
-            .order-2-lg {
-                order: 2;
-            }
-
-            .order-3-lg {
-                order: 3;
-            }
-
-            .chessboard {
-                margin: 20px auto;
-                /* Center board on small screens */
-            }
-
-            .player-card,
-            .scoreboard {
-                margin-top: 20px;
-            }
-
-            .connection-status {
-                top: 10px;
-                right: 10px;
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-
-            .board-coordinates {
-                font-size: 10px;
-            }
-
-            .coord-rank {
-                left: -15px;
-            }
-
-            .coord-file {
-                bottom: -15px;
-            }
-
             .main-game-container {
                 flex-direction: column;
             }
@@ -487,248 +400,298 @@
                 width: 95vw;
                 height: 95vw;
                 max-width: 400px;
-                /* Constrain max size for larger phones/tablets */
                 max-height: 400px;
             }
-
-            .player-card,
-            .scoreboard {
-                padding: 12px;
-            }
-
-            .text-3xl {
-                font-size: 1.75rem;
-                /* 28px */
-            }
-
-            .text-2xl {
-                font-size: 1.5rem;
-                /* 24px */
-            }
-
-            .text-lg {
-                font-size: 1.125rem;
-                /* 18px */
-            }
-
-            .text-sm {
-                font-size: 0.875rem;
-                /* 14px */
-            }
-
-            .text-xs {
-                font-size: 0.75rem;
-                /* 12px */
-            }
-
-            .piece {
-                font-size: clamp(28px, 9vw, 38px);
-            }
-
-            .captured-piece {
-                font-size: clamp(18px, 4.5vw, 20px);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .chessboard {
-                width: 98vw;
-                height: 98vw;
-                border-width: 2px;
-            }
-
-            .coord-rank {
-                left: -10px;
-            }
-
-            .coord-file {
-                bottom: -10px;
+            
+            .celebration-text,
+            .loss-text {
+                font-size: 2.5rem;
             }
         }
     </style>
-    <title>Live Chess Game</title>
+    <title>Enhanced Chess Game</title>
 </head>
-
 <body>
-    <div
-        class="w-full min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-
+    <div class="w-full min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        
         <div id="connection-status" class="connection-status connecting">
             🔄 Connecting...
         </div>
 
-        <div class="flex flex-col xl:flex-row items-center gap-8 max-w-7xl w-full main-game-container">
+        <!-- Sound Control -->
+        <button id="sound-control" class="sound-control" title="Toggle Sound">
+            🔊
+        </button>
 
-            <div class="scoreboard p-4 sm:p-8 w-full xl:w-96 text-white order-2-lg xl:order-1-lg">
+        <!-- Audio elements -->
+        <audio id="move-sound" preload="auto">
+            <source src="/sounds/move.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="capture-sound" preload="auto">
+            <source src="/sounds/capture.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="check-sound" preload="auto">
+            <source src="/sounds/check.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="castle-sound" preload="auto">
+            <source src="/sounds/click.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="promote-sound" preload="auto">
+            <source src="/sounds/click.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="game-over-sound" preload="auto">
+            <source src="/sounds/game-over.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="victory-sound" preload="auto">
+            <source src="/sounds/victory.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="defeat-sound" preload="auto">
+            <source src="/sounds/lose.mp3" type="audio/mpeg">
+        </audio>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="modal">
+            <div class="modal-content">
+                <h2 class="text-4xl font-bold text-white mb-6">♔ Enhanced Chess ♛</h2>
+                <p class="text-gray-300 mb-8">Choose your game mode</p>
+                
+                <div class="space-y-4 mb-8">
+                    <input type="text" id="username-input" placeholder="Enter your username" 
+                           class="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <button id="casual-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300">
+                        🎮 Casual Game
+                        <div class="text-sm opacity-75">Quick match</div>
+                    </button>
+                    <button id="ranked-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300">
+                        🏆 Ranked Game
+                        <div class="text-sm opacity-75">Competitive match</div>
+                    </button>
+                    <button id="create-room-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300">
+                        🏠 Create Room
+                        <div class="text-sm opacity-75">Private game</div>
+                    </button>
+                    <button id="join-room-btn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300">
+                        🔗 Join Room
+                        <div class="text-sm opacity-75">Enter room code</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Control Settings Modal -->
+        <div id="time-control-modal" class="modal hidden">
+            <div class="settings-modal">
+                <h3 class="text-2xl font-bold text-white mb-6">⏰ Time Control</h3>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2">Initial Time (minutes)</label>
+                        <input type="number" id="initial-time" value="10" min="1" max="60" 
+                               class="w-full px-3 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2">Increment (seconds)</label>
+                        <input type="number" id="increment-time" value="5" min="0" max="30" 
+                               class="w-full px-3 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="confirm-create-room" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+                        Create Room
+                    </button>
+                    <button id="cancel-create-room" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Code Modal -->
+        <div id="room-code-modal" class="modal hidden">
+            <div class="settings-modal">
+                <h3 class="text-2xl font-bold text-white mb-6">🔗 Join Room</h3>
+                <input type="text" id="room-code-input" placeholder="Enter room code" 
+                       class="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none mb-6 text-center text-lg font-mono">
+                <div class="flex gap-3">
+                    <button id="confirm-join-room" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+                        Join Room
+                    </button>
+                    <button id="cancel-join-room" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue Status -->
+        <div id="queue-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="text-6xl mb-4 animate-spin">⏳</div>
+                <h2 class="text-3xl font-bold text-white mb-4">Finding Match...</h2>
+                <p class="text-gray-300 mb-4" id="queue-message">Looking for opponent</p>
+                <p class="text-sm text-gray-400">Queue position: <span id="queue-position" class="queue-position">-</span></p>
+                <button id="leave-queue-btn" class="mt-6 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Interface -->
+        <div id="game-interface" class="flex flex-col xl:flex-row items-center gap-8 max-w-7xl w-full main-game-container hidden">
+            
+            <!-- Left Panel - Player Info & Controls -->
+            <div class="scoreboard p-8 w-full xl:w-96 text-white">
                 <div class="text-center mb-6">
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">♔ Live Chess ♛</h2>
+                    <h2 class="text-3xl font-bold text-white mb-2">♔ Enhanced Chess ♛</h2>
                     <div id="game-status" class="text-sm text-gray-300 bg-slate-700 rounded-lg p-2">
-                        Waiting for players...
+                        Game in progress
                     </div>
                     <div class="text-xs text-gray-400 mt-2">
-                        Your Role: <span id="player-role" class="font-semibold">-</span>
-                        <span id="role-badge" class="role-badge role-spectator">Connecting...</span>
+                        Room: <span id="room-info" class="font-semibold">-</span>
                     </div>
                     <div class="text-xs text-gray-400 mt-1">
-                        Spectators: <span id="spectator-count" class="font-semibold">0</span>
+                        Your Role: <span id="player-role" class="font-semibold">-</span>
+                        <span id="spectator-count-display" class="ml-2">Spectators: <span id="spectator-count">0</span></span>
                     </div>
                 </div>
 
+                <!-- White Player Card -->
                 <div class="player-card" id="white-player-card">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center">
-                            <span id="white-status" class="status-indicator status-inactive"></span>
-                            <span class="text-base sm:text-lg font-semibold">White Player</span>
+                            <span class="text-lg font-semibold" id="white-player-name">White Player</span>
                         </div>
-                        <div class="text-2xl sm:text-3xl">♔</div>
+                        <div class="text-3xl">♔</div>
                     </div>
-                    <div class="bg-slate-700 rounded-lg p-3 sm:p-4">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-xs sm:text-sm text-gray-300">Material Score:</span>
-                            <span id="white-score" class="text-xl sm:text-2xl font-bold text-white">0</span>
-                        </div>
-                        <div class="text-xs sm:text-sm text-gray-300 mb-2">Captured Pieces:</div>
-                        <div id="white-captured"
-                            class="min-h-[30px] sm:min-h-[40px] flex flex-wrap bg-slate-800 rounded-lg p-2 sm:p-3">
-                        </div>
-                    </div>
+                    <div id="white-timer" class="timer-display text-center mb-3">10:00</div>
+                    <div class="text-sm text-gray-300">Rating: <span id="white-rating">1200</span></div>
                 </div>
 
+                <!-- Black Player Card -->
                 <div class="player-card" id="black-player-card">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center">
-                            <span id="black-status" class="status-indicator status-inactive"></span>
-                            <span class="text-base sm:text-lg font-semibold">Black Player</span>
+                            <span class="text-lg font-semibold" id="black-player-name">Black Player</span>
                         </div>
-                        <div class="text-2xl sm:text-3xl">♚</div>
+                        <div class="text-3xl">♚</div>
                     </div>
-                    <div class="bg-slate-700 rounded-lg p-3 sm:p-4">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-xs sm:text-sm text-gray-300">Material Score:</span>
-                            <span id="black-score" class="text-xl sm:text-2xl font-bold text-white">0</span>
-                        </div>
-                        <div class="text-xs sm:text-sm text-gray-300 mb-2">Captured Pieces:</div>
-                        <div id="black-captured"
-                            class="min-h-[30px] sm:min-h-[40px] flex flex-wrap bg-slate-800 rounded-lg p-2 sm:p-3">
-                        </div>
-                    </div>
+                    <div id="black-timer" class="timer-display text-center mb-3">10:00</div>
+                    <div class="text-sm text-gray-300">Rating: <span id="black-rating">1200</span></div>
                 </div>
 
-                <div class="game-info">
-                    <div class="flex justify-between text-xs sm:text-sm text-gray-300 mb-2">
-                        <span>Current Turn:</span>
-                        <span id="current-turn" class="font-semibold text-yellow-400">White</span>
+                <!-- Game Controls -->
+                <div class="mt-6 space-y-3">
+                    <div class="flex gap-2">
+                        <button id="resign-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+                            Resign
+                        </button>
+                        <button id="draw-btn" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+                            Offer Draw
+                        </button>
                     </div>
-                    <div class="flex justify-between text-xs sm:text-sm text-gray-300 mb-2">
-                        <span>Move Count:</span>
-                        <span id="move-count" class="font-semibold">0</span>
-                    </div>
-                    <div class="flex justify-between text-xs sm:text-sm text-gray-300 mb-3">
-                        <span>Game Time:</span>
-                        <span id="game-time" class="font-semibold text-green-400">0:00</span>
-                    </div>
-
-                    <div class="border-t border-gray-600 pt-3">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-xs sm:text-sm text-gray-300">Sound Effects:</span>
-                            <button id="sound-toggle"
-                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 shadow-lg">
-                                ON
-                            </button>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="text-xs text-gray-400 mr-3">Volume:</span>
-                            <input type="range" id="volume-slider" min="0" max="100" value="50"
-                                class="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                    </div>
+                    <button id="new-game-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300">
+                        New Game
+                    </button>
                 </div>
-                <button id="new-game-btn"
-                    class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 shadow-md">
-                    New Game
-                </button>
             </div>
 
-            <div class="relative order-1-lg xl:order-2-lg">
-                <div class="board-coordinates coord-rank" id="rank-coords">
-                    <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
-                </div>
-                <div class="board-coordinates coord-file" id="file-coords">
-                    <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
-                </div>
-
+            <!-- Center - Chess Board -->
+            <div class="relative">
                 <div class="chessboard" id="chessboard"></div>
-
                 <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center">
-                    <div id="turn-indicator"
-                        class="bg-yellow-500 text-black px-4 py-1 sm:px-6 sm:py-2 rounded-full font-bold text-base sm:text-lg shadow-lg">
+                    <div id="turn-indicator" class="bg-yellow-500 text-black px-6 py-2 rounded-full font-bold text-lg shadow-lg">
                         White's Turn
                     </div>
                 </div>
             </div>
 
-            <div class="scoreboard p-4 sm:p-8 w-full xl:w-96 text-white order-3-lg xl:order-3-lg">
+            <!-- Right Panel - Move History & Chat -->
+            <div class="scoreboard p-8 w-full xl:w-96 text-white">
                 <div class="text-center mb-6">
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">📝 Game Log</h2>
+                    <h2 class="text-2xl font-bold text-white mb-2">📝 Game Log</h2>
                 </div>
 
+                <!-- Move History -->
                 <div class="mb-6">
-                    <h3 class="text-base sm:text-lg font-semibold mb-3 text-blue-400">Recent Moves</h3>
-                    <div id="move-history" class="bg-slate-700 rounded-lg p-3 sm:p-4 h-64 overflow-y-auto">
-                        <div class="text-sm text-gray-400 text-center">Game hasn't started yet</div>
+                    <h3 class="text-lg font-semibold mb-3 text-blue-400">Recent Moves</h3>
+                    <div id="move-history" class="bg-slate-700 rounded-lg p-4 h-40 overflow-y-auto text-sm">
+                        <div class="text-gray-400 text-center">No moves yet</div>
                     </div>
                 </div>
 
-                <div class="game-info">
-                    <h3 class="text-base sm:text-lg font-semibold mb-3 text-green-400">📊 Statistics</h3>
+                <!-- Chat -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-green-400">💬 Chat</h3>
+                    <div id="chat-container" class="chat-container mb-3 text-sm"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="chat-input" placeholder="Type a message..." 
+                               class="flex-1 px-3 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none text-sm">
+                        <button id="send-chat-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-all duration-300">
+                            Send
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Game Stats -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3 text-purple-400">📊 Game Stats</h3>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div class="bg-slate-800 rounded-lg p-3 text-center">
-                            <div class="text-xl sm:text-2xl font-bold text-red-400" id="total-captures">0</div>
-                            <div class="text-gray-300">Captures</div>
+                            <div class="text-2xl font-bold text-blue-400" id="move-count">0</div>
+                            <div class="text-gray-300">Moves</div>
                         </div>
                         <div class="bg-slate-800 rounded-lg p-3 text-center">
-                            <div class="text-xl sm:text-2xl font-bold text-yellow-400" id="checks-given">0</div>
-                            <div class="text-gray-300">Checks</div>
+                            <div class="text-2xl font-bold text-green-400" id="game-duration">0:00</div>
+                            <div class="text-gray-300">Duration</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="waiting-overlay" class="waiting-overlay">
-            <div class="waiting-content">
-                <div class="text-6xl mb-4 spinning">⏳</div>
-                <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Waiting for Players...</h2>
-                <p class="text-gray-300 mb-6 text-sm sm:text-base">
-                    <span id="waiting-message">Looking for another player to join the game</span>
-                </p>
-                <div class="flex justify-center space-x-4">
-                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        <!-- Draw Offer Modal -->
+        <div id="draw-offer-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2 class="text-2xl font-bold text-white mb-4">Draw Offer</h2>
+                <p class="text-gray-300 mb-6" id="draw-offer-message">Your opponent offers a draw.</p>
+                <div class="flex gap-4 justify-center">
+                    <button id="accept-draw-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                        Accept
+                    </button>
+                    <button id="decline-draw-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                        Decline
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div id="celebration-modal" class="celebration-modal">
-            <div class="celebration-content">
-                <h2 id="celebration-message" class="text-4xl font-bold text-white mb-4"></h2>
-                <p class="text-lg text-gray-300 mb-6">Game Over!</p>
-                <button onclick="hideCelebration()"
-                    class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">
+        <!-- Game End Modal -->
+        <div id="game-end-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="game-end-title" class="text-4xl font-bold text-white mb-4">Game Over!</h2>
+                <p id="game-end-message" class="text-lg text-gray-300 mb-6"></p>
+                <div id="game-end-stats" class="mb-6 text-sm text-gray-400"></div>
+                <button id="close-game-end-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">
                     Close
                 </button>
             </div>
         </div>
+
+        <!-- Celebration Overlay -->
+        <div id="celebration-overlay" class="celebration-overlay hidden">
+            <div class="celebration-text">🎉 VICTORY! 🎉</div>
+        </div>
+
+        <!-- Loss Overlay -->
+        <div id="loss-overlay" class="loss-overlay hidden">
+            <div class="loss-text">💔 DEFEAT 💔</div>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"
-        integrity="sha512-11t8Q+vY9JlCrr+PveZKTYJq8n7O09Y5X/pk/aMd3vJugSvu4xOunGEUzaADqL3I8cZKE/pBwwCfXzDkRJh2sQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+      <script src="script.js"></script>
 </body>
 
 </html>
