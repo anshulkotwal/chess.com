@@ -1,17 +1,38 @@
 {
   "name": "chess.com",
   "version": "1.0.0",
-  "description": "A real-time online chess game",
+  "description": "Real-time multiplayer chess game with Socket.IO",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "chess.js": "^1.4.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "dotenv": "^16.3.1"
   },
-  "author": "Your Name",
-  "license": "ISC"
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "keywords": [
+    "chess",
+    "multiplayer",
+    "socket.io",
+    "real-time",
+    "game",
+    "nodejs"
+  ],
+  "author": "Anshul Kotwal",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anshulkotwal/chess.com"
+  }
 }

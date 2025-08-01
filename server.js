@@ -1,26 +1,40 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const { Chess } = require('chess.js'); // Import chess.js
-const cors = require('cors'); // This import is for Express if you use app.use(cors)
+const { Chess } = require('chess.js');
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-    cors: {
-        origin: 'https://chess-com-delta.vercel.app',
-        methods: ['GET', 'POST']
-    }
+    cors: {
+        origin: process.env.NODE_ENV === 'production'
+            ? [process.env.CLIENT_URL || "https://chess-com-452r.onrender.com"]
+            : 'http://localhost:3000',
+        methods: ['GET', 'POST']
+    }
 });
 
 app.use(cors({
-    origin: 'https://chess-com-delta.vercel.app',
-    methods: ['GET', 'POST']
+    origin: process.env.NODE_ENV === 'production'
+        ? [process.env.CLIENT_URL || "https://chess-com-452r.onrender.com"]
+        : 'http://localhost:3000',
+    methods: ['GET', 'POST']
 }));
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        activeGames: Object.keys(games).length,
+        activePlayers: Object.keys(players).length
+    });
+});
 
 // Game State Variables
 const games = {}; // Stores game instances, keyed by gameId
@@ -124,7 +138,11 @@ io.on('connection', (socket) => {
     console.log(`A user connected: ${socket.id}`);
     players[socket.id] = { username: `Guest-${socket.id.substring(0, 4)}`, role: 'spectator', gameId: null };
     spectatorCount++;
-    io.emit('spectatorCount', spectatorCount); // Update all clients about spectator count
+    io.emit('spectatorCount', spectatorCount);
+
+     socket.on('error', (error) => {
+        console.error(`Socket error for ${socket.id}:`, error);
+    });
 
     // Inform the new client about their initial role
     socket.emit('playerRole', { role: 'spectator' });
@@ -313,25 +331,24 @@ io.on('connection', (socket) => {
                 });
 
                 // Check for game over conditions
-                // *** CORRECTION START ***
-                if (game.isCheckmate()) { // Changed from game.inCheckmate()
+                if (game.isCheckmate()) {
                     const winnerColor = game.turn() === 'w' ? 'Black' : 'White';
                     io.to(gameId).emit('gameOver', { winner: winnerColor, reason: 'Checkmate' });
                     console.log(`Game ${gameId} ended: ${winnerColor} wins by Checkmate`);
                     resetGame(gameId);
-                } else if (game.isDraw()) { // Changed from game.inDraw() for consistency, although this one might have worked
+                } else if (game.isDraw()) {
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Draw' });
                     console.log(`Game ${gameId} ended: Draw`);
                     resetGame(gameId);
-                } else if (game.isStalemate()) { // Changed from game.inStalemate()
+                } else if (game.isStalemate()) {
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Stalemate' });
                     console.log(`Game ${gameId} ended: Stalemate`);
                     resetGame(gameId);
-                } else if (game.isThreefoldRepetition()) { // Changed from game.inThreefoldRepetition() for consistency
+                } else if (game.isThreefoldRepetition()) {
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Threefold Repetition' });
                     console.log(`Game ${gameId} ended: Threefold Repetition`);
                     resetGame(gameId);
-                } else if (game.isInsufficientMaterial()) { // Changed from game.insufficientMaterial() for consistency
+                } else if (game.isInsufficientMaterial()) {
                     io.to(gameId).emit('gameOver', { winner: 'Draw', reason: 'Insufficient Material' });
                     console.log(`Game ${gameId} ended: Insufficient Material`);
                     resetGame(gameId);
@@ -360,23 +377,20 @@ io.on('connection', (socket) => {
     });
 
     // Handle new game requests
-    socket.on('newGameRequest', () => { // Changed from 'newGame' to 'newGameRequest' for clarity
+    socket.on('newGame', () => { 
         const playerInfo = players[socket.id];
         if (playerInfo.gameId) {
-            // Player is already in a game, leave it first and reset
             resetGame(playerInfo.gameId);
             console.log(`Player ${socket.id} left game ${playerInfo.gameId} for a new one.`);
         }
 
-        // Put the player in the waiting list for a new game
-        playerInfo.gameId = null; // Clear previous game ID
-        playerInfo.role = 'spectator'; // Reset role temporarily
-        // Ensure not already in waitingPlayers before pushing
+        playerInfo.gameId = null;
+        playerInfo.role = 'spectator';
         if (!waitingPlayers.find(s => s.id === socket.id)) {
             waitingPlayers.push(socket);
         }
         socket.emit('waitingForPlayer', { message: "Waiting for another player to join for a new game..." });
-        socket.emit('playerRole', { role: 'spectator' }); // Inform client about temp role
+        socket.emit('playerRole', { role: 'spectator' });
         console.log(`Player ${socket.id} requested a new game and is now waiting.`);
     });
 
@@ -417,7 +431,18 @@ io.on('connection', (socket) => {
 });
 
 
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+    process.exit(1);
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

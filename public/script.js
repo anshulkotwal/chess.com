@@ -36,6 +36,7 @@ const fileCoordsElem = document.getElementById('file-coords');
 
 
 // --- Game State Variables (Client-side) ---
+let socket;
 let currentBoard = [];
 let playerColor = null; // 'white', 'black', or null (for spectator)
 let selectedPieceSquare = null; // HTMLDivElement representing the selected square
@@ -83,11 +84,6 @@ try {
     }
 }
 
-/**
- * Plays a sound effect if sound is enabled.
- * Catches potential errors if the audio cannot be played (e.g., autoplay policies).
- * @param {HTMLAudioElement} sound - The audio element to play.
- */
 function playSound(sound) {
     if (soundEnabled && sound) {
         sound.play().catch(e => console.warn("Error playing sound:", e.message));
@@ -590,11 +586,9 @@ function promptForPromotion(fromSq, toSq) {
 }
 
 
-let socket; // Declared at the top, outside the DOMContentLoaded for broader scope
 
 // --- Socket.IO Event Handlers ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if io is defined (Socket.IO client library loaded)
     if (typeof io === 'undefined') {
         console.error("Socket.IO client library not found. Please ensure 'socket.io.js' is loaded before 'script.js'.");
         updateConnectionStatus('disconnected');
@@ -602,13 +596,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const socket = io();
+    socket = io(); // FIXED: Removed 'const' - now assigns to global variable
     updateConnectionStatus('connecting');
 
     socket.on('connect', () => {
         console.log('Connected to server!');
         updateConnectionStatus('connected');
-        // Request initial state for a potentially reconnecting player or to get assigned to a game
         socket.emit('requestInitialState');
     });
 
@@ -627,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameStatusElem) gameStatusElem.textContent = 'Connection error. Please check your internet.';
         showWaitingOverlay("Connection error. Please refresh the page.");
     });
-
+    
     socket.on('playerRole', ({ role, gameId }) => {
         playerColor = role;
         if (playerRoleElem) playerRoleElem.textContent = role.charAt(0).toUpperCase() + role.slice(1);
@@ -704,6 +697,29 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTurnIndicator(turn);
 
         console.log('Game started!');
+    });
+
+     socket.on('requestBoardStateResponse', (data) => {
+        hideWaitingOverlay();
+        gameActive = true;
+        renderBoard(data.board);
+        updateTurnIndicator(data.turn);
+        updateScoreboard(data.whiteScore, data.blackScore, data.capturedWhite, data.capturedBlack);
+        updateMoveCount(data.moveCount);
+        updateMoveHistory(data.history);
+        if (gameStatusElem) {
+            gameStatusElem.textContent = data.isCheck ? 
+                `${data.turn === 'w' ? 'Black' : 'White'} is in Check!` : 'Game in Progress';
+            if (data.isCheck) gameStatusElem.classList.add('text-red-500');
+            else gameStatusElem.classList.remove('text-red-500');
+        }
+    });
+
+    socket.on('playerDisconnected', ({ message }) => {
+        gameActive = false;
+        clearInterval(gameInterval);
+        showWaitingOverlay(message);
+        if (gameStatusElem) gameStatusElem.textContent = 'Opponent disconnected';
     });
 
     socket.on('boardUpdate', ({ board, turn, lastMove, moveCount, whiteScore, blackScore, capturedPiece, isCheck, history, capturedWhite, capturedBlack }) => {
@@ -807,9 +823,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Add event listeners for newGameBtn, soundToggleBtn, volumeSlider if they exist
-    if (newGameBtn) {
+     if (newGameBtn) {
         newGameBtn.addEventListener('click', () => {
-            if (socket) socket.emit('newGame');
+            if (socket) socket.emit('newGame'); 
         });
     }
 
