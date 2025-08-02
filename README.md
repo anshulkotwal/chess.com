@@ -36,12 +36,10 @@ Experience the game live at: **[chess-com-452r.onrender.com](https://chess-com-4
 <img width="851" height="672" alt="{F54CBE80-AE58-4F4A-9469-2BF714B8C27C}" src="https://github.com/user-attachments/assets/b5d0c58a-61c4-4e85-8a57-792c12e5b4ce" />
 *Modern Entering Page with 🎮 Casual Game -> Quick match ,🏆 Ranked Game->Competitive match , 🏠 Create Room -> Private game , 🔗 Join Room -> Enter room code*
 
-![Chess Arena - Gameplay](<img width="1763" height="926" alt="{4F919BDB-6602-48A4-9DBA-0AF068136B60}" src="https://github.com/user-attachments/assets/87516521-35a2-42cc-9692-c43d500d705f" />
-)
+<img width="1763" height="926" alt="{4F919BDB-6602-48A4-9DBA-0AF068136B60}" src="https://github.com/user-attachments/assets/87516521-35a2-42cc-9692-c43d500d705f" />
 *Real-time chess gameplay with advanced features and interactive board*
 
-![Chess Arena - Chatting](<img width="684" height="838" alt="{B212E103-CF6F-42F9-8F69-A489D72686A8}" src="https://github.com/user-attachments/assets/c3123dca-960f-41c9-8404-752f0b50b8c6" />
-)
+<img width="684" height="838" alt="{B212E103-CF6F-42F9-8F69-A489D72686A8}" src="https://github.com/user-attachments/assets/c3123dca-960f-41c9-8404-752f0b50b8c6" />
 *Live Real time chat availaible*
 
 ---
