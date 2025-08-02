@@ -8,7 +8,7 @@
 
 **A modern, real-time multiplayer chess platform built with cutting-edge web technologies**
 
-[🎮 Play Now](https://chess-com-452r.onrender.com/) • [📖 Documentation](#documentation) • [🚀 Features](#features) • [⚡ Quick Start](#quick-start)
+[🎮 Play Now]   • [📖 Documentation]  • [🚀 Features]  • [⚡ Quick Start]
 
 </div>
 
@@ -33,9 +33,7 @@ Chess Arena is a production-grade, real-time multiplayer chess platform that del
 Experience the game live at: **[chess-com-452r.onrender.com](https://chess-com-452r.onrender.com/)**
 
 ### 📱 Screenshots
-
-![Chess Arena - Entering Page](<img width="760" height="674" alt="{D765EAD3-C70D-4991-BDAA-A7E7773FE31B}" src="https://github.com/user-attachments/assets/b387489a-b1b5-46f5-b21a-61ffa9673cb4" />
-)
+<img width="851" height="672" alt="{F54CBE80-AE58-4F4A-9469-2BF714B8C27C}" src="https://github.com/user-attachments/assets/b5d0c58a-61c4-4e85-8a57-792c12e5b4ce" />
 *Modern Entering Page with 🎮 Casual Game -> Quick match ,🏆 Ranked Game->Competitive match , 🏠 Create Room -> Private game , 🔗 Join Room -> Enter room code*
 
 ![Chess Arena - Gameplay](<img width="1763" height="926" alt="{4F919BDB-6602-48A4-9DBA-0AF068136B60}" src="https://github.com/user-attachments/assets/87516521-35a2-42cc-9692-c43d500d705f" />
@@ -249,8 +247,8 @@ We welcome contributions! Please follow these steps:
 **Anshul Kotwal**
 - 🌐 **Portfolio**: [anshulkotwal.dev](https://anshulkotwal.netlify.app/)
 - 💼 **LinkedIn**: [linkedin.com/in/anshulkotwal](https://www.linkedin.com/in/anshul-kotwal/)
-- 📧 **Email**: anshulkotwal12@gmail.com.com
-- 🐦 **Twitter**: [@anshulkotwal]((https://x.com/Anshulkotwal12))
+- 📧 **Email**: anshulkotwal12@gmail.com
+- 🐦 **Twitter**: [@anshulkotwal](https://x.com/Anshulkotwal12)
 
 ---
 
